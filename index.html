@@ -1,0 +1,1712 @@
+<!doctype html>
+<html lang="ms" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>e-TASMIK - Sistem Pengurusan Tasmik</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <!-- Lucide Icons -->
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <!-- SheetJS for Excel Exports/Imports -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
+  <!-- Menggunakan Google Font "Amiri" untuk kaligrafi Arab yang premium, stabil, dan anti-cutting -->
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&amp;display=swap" rel="stylesheet">
+  
+  <style>
+    * { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .bg-pattern {
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2310b981' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+  </style>
+
+  <!-- Firebase CDN SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore-compat.js"></script>
+</head>
+<body class="h-full bg-[#f0f7f4] bg-pattern text-[#1f2937]">
+
+  <div id="app" class="h-full flex flex-col relative overflow-auto">
+    
+    <!-- Premium Bismillah Banner - Diperluas dan Dijamin Tidak Terpotong -->
+    <div class="w-full bg-gradient-to-r from-[#0f172a] via-[#1e3a8a] to-[#0f172a] text-white text-center py-4 md:py-5 z-20 shadow-md relative overflow-visible border-b border-amber-500/20 flex items-center justify-center min-h-[75px] md:min-h-[90px]">
+      <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(245,158,11,0.1)_0%,transparent_70%)]"></div>
+      <p class="text-3xl md:text-4xl font-normal tracking-wide text-amber-200 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] relative z-10 leading-relaxed" style="font-family: 'Amiri', serif;">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيم</p>
+    </div>
+
+    <!-- Alert / Confirmation Modal -->
+    <div id="modal-overlay" class="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4 backdrop-blur-sm hidden">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6">
+        <div class="flex items-center space-x-3 mb-4 text-red-600">
+          <i id="modal-icon" data-lucide="alert-circle" class="w-7 h-7"></i>
+          <h3 id="modal-title" class="text-xl font-bold"></h3>
+        </div>
+        <div id="modal-message" class="text-gray-600 mb-8 leading-relaxed text-sm max-h-[400px] overflow-y-auto"></div>
+        <div class="flex justify-end space-x-3">
+          <button onclick="closeModal()" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition">Batal / Tutup</button> 
+          <button id="modal-confirm-btn" class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl transition shadow-md flex items-center"> 
+            <i data-lucide="trash-2" class="w-4 h-4 mr-2"></i> Ya, Teruskan
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-20 right-6 bg-emerald-600 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center space-x-3 z-50 transform translate-y-0 opacity-0 transition-all duration-300 hidden">
+      <i data-lucide="check-circle-2" class="w-5 h-5"></i> 
+      <span id="toast-msg" class="font-medium text-sm text-left"></span>
+    </div>
+
+    <!-- High-End Professional Header -->
+    <header class="bg-gradient-to-r from-[#1e3a8a] via-[#1e40af] to-[#172554] text-white p-5 px-6 shadow-xl z-10 flex flex-wrap justify-between items-center w-full gap-4 relative">
+      <!-- Subtle Overlay Pattern -->
+      <div class="absolute inset-0 bg-pattern opacity-10 pointer-events-none"></div>
+      
+      <div class="flex items-center space-x-4 relative z-10">
+        <div class="bg-gradient-to-tr from-amber-400 to-amber-200 text-[#1e3a8a] p-3 rounded-2xl shadow-lg border border-white/20 transform hover:scale-105 transition-all duration-300 flex-shrink-0">
+          <i data-lucide="book-open" class="w-7 h-7"></i>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <h1 id="header-title" class="text-2xl md:text-3xl font-extrabold tracking-wider bg-gradient-to-r from-white via-blue-100 to-amber-200 bg-clip-text text-transparent">e-TASMIK</h1>
+            <span class="bg-amber-400/20 text-amber-300 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border border-amber-400/30 uppercase tracking-widest">PRO</span>
+          </div>
+          <p id="header-subtitle" class="text-xs md:text-sm text-blue-100/90 font-medium">Sistem Pengurusan Rekod Tasmik Bersepadu Sekolah</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-3 flex-wrap gap-2 relative z-10">
+        <span id="sync-status" class="inline-flex items-center px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 shadow-sm backdrop-blur-md">
+          <span class="relative flex h-2.5 w-2.5 mr-2">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+          </span>
+          SINKRONISASI AWAN AKTIF
+        </span>
+        <button onclick="window.location.reload()" class="flex items-center space-x-2 bg-white/10 hover:bg-white/20 transition-all duration-200 px-4 py-2 rounded-xl text-xs md:text-sm font-semibold border border-white/15 hover:border-white/30 shadow-md"> 
+          <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+          <span>Muat Semula</span> 
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 w-full max-w-5xl mx-auto p-4 md:p-6 z-10">
+      
+      <!-- Stats Board -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl shadow-lg p-6 border-l-4 border-blue-600 hover:shadow-xl transition duration-300 flex items-center space-x-6">
+          <div class="bg-blue-600 text-white rounded-full p-4 shadow-lg flex-shrink-0">
+            <i data-lucide="users" class="w-8 h-8"></i>
+          </div>
+          <div class="flex-1">
+            <h3 class="text-blue-600 text-xs font-bold tracking-widest uppercase mb-1">Jumlah Murid</h3>
+            <p id="stat-murid" class="text-4xl font-black text-blue-700">0</p>
+          </div>
+        </div>
+        
+        <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl shadow-lg p-6 border-l-4 border-purple-600 hover:shadow-xl transition duration-300 flex items-center space-x-6">
+          <div class="bg-purple-600 text-white rounded-full p-4 shadow-lg flex-shrink-0">
+            <i data-lucide="book-open" class="w-8 h-8"></i>
+          </div>
+          <div class="flex-1">
+            <h3 class="text-purple-600 text-xs font-bold tracking-widest uppercase mb-1">Jumlah Kelas</h3>
+            <p id="stat-kelas" class="text-4xl font-black text-purple-700">0</p>
+          </div>
+        </div>
+        
+        <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-2xl shadow-lg p-6 border-l-4 border-emerald-600 hover:shadow-xl transition duration-300 flex items-center space-x-6">
+          <div class="bg-emerald-600 text-white rounded-full p-4 shadow-lg flex-shrink-0">
+            <i data-lucide="check-circle-2" class="w-8 h-8"></i>
+          </div>
+          <div class="flex-1">
+            <h3 class="text-emerald-600 text-xs font-bold tracking-widest uppercase mb-1">Tasmik Hari Ini</h3>
+            <p id="stat-rekod" class="text-4xl font-black text-emerald-700">0</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="bg-[#e0f0e9] rounded-xl p-1.5 flex flex-wrap md:flex-nowrap justify-between items-center mb-6 shadow-inner">
+        <button onclick="switchTab('Input')" data-tab="Input" class="tab-btn flex-1 py-3 px-4 text-center rounded-lg text-sm font-bold transition-all flex items-center justify-center bg-white text-[#2b7a5a] shadow-sm">
+          <i data-lucide="edit-3" class="w-4 h-4 mr-2"></i>Input Rekod
+        </button> 
+        <button onclick="switchTab('Rekod')" data-tab="Rekod" class="tab-btn flex-1 py-3 px-4 text-center rounded-lg text-sm font-bold transition-all flex items-center justify-center text-gray-500 hover:text-[#2b7a5a] hover:bg-white/50">
+          <i data-lucide="list" class="w-4 h-4 mr-2"></i>Rekod Hari Ini
+        </button> 
+        <button onclick="switchTab('Analisis')" data-tab="Analisis" class="tab-btn flex-1 py-3 px-4 text-center rounded-lg text-sm font-bold transition-all flex items-center justify-center text-gray-500 hover:text-[#2b7a5a] hover:bg-white/50">
+          <i data-lucide="bar-chart-3" class="w-4 h-4 mr-2"></i>Analisis
+        </button> 
+        <button onclick="switchTab('Tetapan')" data-tab="Tetapan" class="tab-btn flex-1 py-3 px-4 text-center rounded-lg text-sm font-bold transition-all flex items-center justify-center text-gray-500 hover:text-[#2b7a5a] hover:bg-white/50">
+          <i data-lucide="settings" class="w-4 h-4 mr-2"></i>Tetapan &amp; Kelas
+        </button>
+      </div>
+
+      <!-- Tab Content: Input -->
+      <div id="tab-Input" class="tab-content">
+        <div class="bg-white rounded-2xl shadow-lg border border-emerald-100 overflow-hidden">
+          <div class="p-6 md:p-8">
+            <div class="flex items-center space-x-3 mb-8">
+              <div class="bg-[#e0f0e9] p-2.5 rounded-lg text-[#2b7a5a]">
+                <i data-lucide="leaf" class="w-5 h-5"></i>
+              </div>
+              <h2 class="text-xl font-bold text-gray-800">Masukkan Rekod Baru</h2>
+            </div>
+            
+            <form id="form-input" class="space-y-6" onsubmit="handleSubmit(event)">
+              <div class="space-y-2">
+                <label class="flex items-center text-xs font-bold text-gray-600 tracking-wide uppercase">
+                  <i data-lucide="calendar" class="w-3.5 h-3.5 mr-2 text-emerald-600"></i>Tarikh
+                </label> 
+                <input type="date" id="input-tarikh" class="w-full border border-gray-200 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#2b7a5a] focus:border-[#2b7a5a] outline-none transition" required>
+              </div>
+              
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-2">
+                  <label class="flex items-center text-xs font-bold text-gray-600 tracking-wide uppercase">
+                    <i data-lucide="users" class="w-3.5 h-3.5 mr-2 text-emerald-600"></i>Pilih Kelas
+                  </label> 
+                  <select id="input-kelas" onchange="onKelasChange()" class="w-full border border-gray-200 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#2b7a5a] focus:border-[#2b7a5a] outline-none transition appearance-none" required> 
+                    <option value="">-- Pilih Kelas --</option> 
+                  </select>
+                </div>
+                <div class="space-y-2">
+                  <label class="flex items-center text-xs font-bold text-gray-600 tracking-wide uppercase">
+                    <i data-lucide="user" class="w-3.5 h-3.5 mr-2 text-emerald-600"></i>Nama Murid
+                  </label> 
+                  <select id="input-murid" onchange="onMuridChange()" class="w-full border border-gray-200 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#2b7a5a] focus:border-[#2b7a5a] outline-none transition appearance-none disabled:opacity-60 disabled:cursor-not-allowed" disabled required> 
+                    <option value="">Pilih Kelas Dahulu</option> 
+                  </select>
+                </div>
+              </div>
+
+              <!-- Kad Rekod Bacaan Terakhir Lampau (Dinamik & Premium) -->
+              <div id="info-bacaan-terdahulu" class="hidden bg-amber-50/70 border border-amber-200 rounded-xl p-4 flex items-start space-x-3 transition-all duration-300">
+                <div class="bg-amber-100 text-amber-800 p-2.5 rounded-lg flex-shrink-0">
+                  <i data-lucide="history" class="w-5 h-5"></i>
+                </div>
+                <div class="flex-1">
+                  <h4 class="text-xs font-bold text-amber-800 uppercase tracking-wider">Rekod Bacaan Terakhir Murid</h4>
+                  <p id="info-bacaan-teks" class="text-sm font-semibold text-gray-800 mt-1">Sila pilih nama murid terlebih dahulu.</p>
+                  <p id="info-bacaan-meta" class="text-[10px] text-gray-500 mt-0.5"></p>
+                </div>
+              </div>
+              
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-2">
+                  <label class="flex items-center text-xs font-bold text-gray-600 tracking-wide uppercase">
+                    <i data-lucide="book" class="w-3.5 h-3.5 mr-2 text-emerald-600"></i>Jenis Bacaan
+                  </label> 
+                  <select id="input-jenis" onchange="onJenisChange()" class="w-full border border-gray-200 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#2b7a5a] focus:border-[#2b7a5a] outline-none transition appearance-none"> 
+                    <option value="Al-Quran">Al-Quran</option> 
+                    <option value="Iqra' 1">Iqra' 1</option> 
+                    <option value="Iqra' 2">Iqra' 2</option> 
+                    <option value="Iqra' 3">Iqra' 3</option> 
+                    <option value="Iqra' 4">Iqra' 4</option> 
+                    <option value="Iqra' 5">Iqra' 5</option> 
+                    <option value="Iqra' 6">Iqra' 6</option> 
+                  </select>
+                </div>
+                
+                <div class="space-y-2">
+                  <label class="flex items-center text-xs font-bold text-gray-600 tracking-wide uppercase">
+                    <i data-lucide="file-text" class="w-3.5 h-3.5 mr-2 text-emerald-600"></i>Maklumat Bacaan Baru
+                  </label>
+                  <div class="flex space-x-3 mb-2">
+                    <div id="btn-biasa" onclick="setPerincian('Biasa')" class="flex-1 border rounded-xl py-2 px-4 flex items-center justify-center cursor-pointer transition bg-[#e0f0e9] border-[#2b7a5a] text-[#2b7a5a]">
+                      <input type="radio" name="perincian" checked class="mr-2 accent-[#2b7a5a]">
+                      <span class="text-sm font-semibold">Biasa</span>
+                    </div>
+                    <div id="btn-khatam" onclick="setPerincian('Khatam')" class="flex-1 border rounded-xl py-2 px-4 flex items-center justify-center cursor-pointer transition border-gray-200 bg-gray-50 text-gray-600">
+                      <input type="radio" name="perincian" class="mr-2 accent-[#2b7a5a]">
+                      <span class="text-sm font-semibold">Khatam</span>
+                    </div>
+                  </div>
+                  
+                  <div id="quran-fields" class="space-y-2">
+                    <div class="flex space-x-2">
+                      <input type="number" id="input-muka" oninput="autoJuzuk()" placeholder="Muka Surat (1-604)" min="1" max="604" class="w-2/3 border border-gray-200 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#2b7a5a] focus:border-[#2b7a5a] outline-none transition"> 
+                      <input type="text" id="input-juzuk" readonly placeholder="Auto Juzuk" class="w-1/3 border border-emerald-200 bg-[#e0f0e9] text-[#2b7a5a] rounded-xl px-2 py-3 text-sm font-bold text-center outline-none">
+                    </div>
+                    <input type="text" id="input-surah" placeholder="Surah &amp; Ayat (Pilihan)" class="w-full border border-gray-200 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#2b7a5a] focus:border-[#2b7a5a] outline-none transition">
+                  </div>
+                </div>
+              </div>
+              
+              <div class="pt-4">
+                <button type="submit" class="w-full bg-[#3e8a61] hover:bg-[#2b7a5a] text-white font-bold rounded-xl px-4 py-4 flex items-center justify-center space-x-2 transition-colors shadow-md hover:shadow-lg"> 
+                  <i data-lucide="save" class="w-5 h-5"></i>
+                  <span>SIMPAN REKOD BACAAN</span> 
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Content: Rekod -->
+      <div id="tab-Rekod" class="tab-content hidden">
+        <div class="bg-white rounded-2xl shadow-lg border border-emerald-100 p-6 md:p-8">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 font-semibold">
+            <div class="flex items-center space-x-3">
+              <div class="bg-[#e0f0e9] p-2.5 rounded-lg text-[#2b7a5a]">
+                <i data-lucide="clock" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <h2 class="text-xl font-bold text-gray-800">Senarai Rekod Tasmik Hari Ini</h2>
+                <p id="today-date-str" class="text-xs text-gray-500"></p>
+              </div>
+            </div>
+            
+            <div class="flex flex-wrap gap-2">
+              <button onclick="eksportKeExcel()" class="bg-[#10b981] hover:bg-[#059669] text-white font-bold rounded-xl px-4 py-2.5 text-xs flex items-center space-x-2 transition shadow-sm">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                <span>EKSPORT REKOD HARI INI</span>
+              </button>
+              <button onclick="eksportLaporanPrestasiExcel()" class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-xl px-4 py-2.5 text-xs flex items-center space-x-2 transition shadow-sm">
+                <i data-lucide="file-spreadsheet" class="w-4.5 h-4.5"></i>
+                <span>EKSPORT LAPORAN PRESTASI (EXCEL)</span>
+              </button>
+            </div>
+          </div>
+          
+          <div class="overflow-x-auto rounded-xl border border-gray-100">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-emerald-50 text-emerald-800 text-xs uppercase tracking-wider border-b-2 border-emerald-200">
+                  <th class="p-4 font-bold rounded-tl-xl">Masa</th>
+                  <th class="p-4 font-bold">Kelas</th>
+                  <th class="p-4 font-bold">Nama Murid</th>
+                  <th class="p-4 font-bold">Jenis Bacaan</th>
+                  <th class="p-4 font-bold">Maklumat Bacaan</th>
+                  <th class="p-4 font-bold text-right rounded-tr-xl">Tindakan</th>
+                </tr>
+              </thead>
+              <tbody id="rekod-tbody" class="divide-y divide-gray-100">
+                <tr>
+                  <td colspan="6" class="p-8 text-center text-gray-500 italic">Tiada rekod setakat ini. Sila masukkan rekod di ruangan 'Input'.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Content: Analisis -->
+      <div id="tab-Analisis" class="tab-content hidden">
+        <div class="space-y-6">
+          <!-- Filter Area -->
+          <div class="bg-white rounded-2xl shadow-md border border-emerald-100 p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div class="flex items-center space-x-3 text-emerald-800">
+              <div class="bg-blue-50 p-2.5 rounded-lg text-blue-600">
+                <i data-lucide="filter" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <h2 class="text-lg font-bold text-gray-800">Analisis Prestasi &amp; Tahap Bacaan</h2>
+                <p id="analisis-desc" class="text-xs text-gray-500">Analisis menyeluruh dalam bentuk peratusan mengikut tahap pencapaian murid</p>
+              </div>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+              <select id="filter-jenis" onchange="onFilterJenisChange()" class="border border-gray-200 bg-gray-50 rounded-xl px-4 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-[#2b7a5a] outline-none"> 
+                <option value="keseluruhan">Keseluruhan Murid</option> 
+                <option value="kelas">Mengikut Kelas</option> 
+              </select> 
+              <select id="filter-nilai" onchange="renderAnalisis()" class="border border-gray-200 bg-gray-50 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#2b7a5a] outline-none hidden"></select>
+              
+              <button onclick="eksportLaporanPrestasiExcel()" class="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-bold rounded-xl px-4 py-2.5 text-xs flex items-center justify-center space-x-2 transition shadow-md whitespace-nowrap">
+                <i data-lucide="file-spreadsheet" class="w-4.5 h-4.5"></i>
+                <span>EKSPORT LAPORAN PRESTASI (EXCEL)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Statistics Dashboard (Iqra' & Al-Quran Brackets) -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- Iqra' Performance Percentages -->
+            <div class="bg-white rounded-2xl shadow-md border border-emerald-100 p-6">
+              <div class="flex items-center justify-between mb-6 pb-2 border-b border-gray-100">
+                <div class="flex items-center space-x-2.5">
+                  <div class="bg-blue-50 p-2 rounded-lg text-blue-600">
+                    <i data-lucide="book-open" class="w-5 h-5"></i>
+                  </div>
+                  <h3 class="font-bold text-gray-800 text-sm md:text-base">Peratusan Mengikut Tahap Iqra'</h3>
+                </div>
+                <span id="iqra-total-badge" class="bg-blue-100 text-blue-800 text-xs px-2.5 py-1 rounded-full font-bold">0 Murid</span>
+              </div>
+              
+              <div id="iqra-statistics-bars" class="space-y-4">
+                <!-- Iqra' 1 - 6 Bars Dynamically Inserted Here -->
+              </div>
+            </div>
+
+            <!-- Al-Quran Performance Percentages -->
+            <div class="bg-white rounded-2xl shadow-md border border-emerald-100 p-6">
+              <div class="flex items-center justify-between mb-6 pb-2 border-b border-gray-100">
+                <div class="flex items-center space-x-2.5">
+                  <div class="bg-emerald-50 p-2 rounded-lg text-emerald-600">
+                    <i data-lucide="award" class="w-5 h-5"></i>
+                  </div>
+                  <h3 class="font-bold text-gray-800 text-sm md:text-base">Peratusan Al-Quran &amp; Khatam</h3>
+                </div>
+                <span id="quran-total-badge" class="bg-emerald-100 text-emerald-800 text-xs px-2.5 py-1 rounded-full font-bold">0 Murid</span>
+              </div>
+              
+              <div id="quran-statistics-bars" class="space-y-4">
+                <!-- 5-Juz increments and Khatam Bars Dynamically Inserted Here -->
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Overall Summary Metric Cards -->
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-gradient-to-br from-blue-50 to-blue-100/60 rounded-xl p-4 border border-blue-200">
+              <span class="text-[10px] font-bold text-blue-600 uppercase tracking-wider block mb-1">Jumlah Tahap Iqra'</span>
+              <div class="flex items-baseline space-x-2">
+                <span id="summary-iqra-count" class="text-2xl font-black text-blue-800">0</span>
+                <span id="summary-iqra-pct" class="text-xs font-semibold text-blue-600">(0%)</span>
+              </div>
+            </div>
+            <div class="bg-gradient-to-br from-emerald-50 to-emerald-100/60 rounded-xl p-4 border border-emerald-200">
+              <span class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider block mb-1">Jumlah Tahap Al-Quran</span>
+              <div class="flex items-baseline space-x-2">
+                <span id="summary-quran-count" class="text-2xl font-black text-emerald-800">0</span>
+                <span id="summary-quran-pct" class="text-xs font-semibold text-emerald-600">(0%)</span>
+              </div>
+            </div>
+            <div class="bg-gradient-to-br from-purple-50 to-purple-100/60 rounded-xl p-4 border border-purple-200">
+              <span class="text-[10px] font-bold text-purple-600 uppercase tracking-wider block mb-1">Jumlah Telah Khatam</span>
+              <div class="flex items-baseline space-x-2">
+                <span id="summary-khatam-count" class="text-2xl font-black text-purple-800">0</span>
+                <span id="summary-khatam-pct" class="text-xs font-semibold text-purple-600">(0%)</span>
+              </div>
+            </div>
+            <div class="bg-gradient-to-br from-gray-50 to-gray-100/60 rounded-xl p-4 border border-gray-200">
+              <span class="text-[10px] font-bold text-gray-505 uppercase tracking-wider block mb-1">Belum Mula Tasmik</span>
+              <div class="flex items-baseline space-x-2">
+                <span id="summary-belum-count" class="text-2xl font-black text-gray-700">0</span>
+                <span id="summary-belum-pct" class="text-xs font-semibold text-gray-505">(0%)</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Tab Content: Tetapan -->
+      <div id="tab-Tetapan" class="tab-content hidden">
+        <div class="bg-white rounded-2xl shadow-lg border border-emerald-100 p-6 md:p-8">
+          <div class="flex items-center space-x-3 mb-8">
+            <div class="bg-[#e0f0e9] p-2.5 rounded-lg text-[#2b7a5a]">
+              <i data-lucide="settings" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h2 class="text-xl font-bold text-gray-800">Tetapan &amp; Pengurusan Kelas</h2>
+              <p class="text-xs text-gray-500">Tambah kelas, murid secara manual atau import melalui Excel</p>
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Left Panel: Registration and Uploads -->
+            <div class="space-y-6">
+              <div class="bg-gray-50 border border-gray-200 rounded-xl p-6">
+                <h3 class="text-base font-bold text-gray-700 mb-4 flex items-center">
+                  <i data-lucide="plus-circle" class="w-4 h-4 mr-2 text-emerald-600"></i>
+                  Daftar Kelas &amp; Murid
+                </h3>
+                
+                <form onsubmit="handleTambahKelas(event)" class="mb-6 pb-6 border-b border-gray-200 border-dashed">
+                  <label class="text-xs font-bold text-gray-600 tracking-wide uppercase mb-2 block">Daftar Kelas Baru</label>
+                  <div class="flex space-x-2">
+                    <input type="text" id="input-kelas-baru" placeholder="Cth: 3 Abu Bakar" class="flex-1 border border-gray-200 bg-white rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#2b7a5a] outline-none uppercase" required> 
+                    <button type="submit" class="bg-[#2b7a5a] hover:bg-[#1e5c43] text-white font-bold rounded-xl px-4 py-2.5 text-sm transition shadow-sm whitespace-nowrap">
+                      Tambah Kelas
+                    </button>
+                  </div>
+                </form>
+                
+                <form onsubmit="handleTambahMurid(event)" class="space-y-4">
+                  <div class="space-y-2">
+                    <label class="text-xs font-bold text-gray-600 tracking-wide uppercase">Pilih Kelas</label> 
+                    <select id="tetapan-kelas" class="w-full border border-gray-200 bg-white rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#2b7a5a] outline-none" required> 
+                      <option value="">-- Pilih Kelas Dahulu --</option> 
+                    </select>
+                  </div>
+                  <div class="pt-2 border-t border-gray-200 border-dashed">
+                    <p class="text-xs font-bold text-gray-500 mb-2">PILIHAN 1: TAMBAH NAMA INDIVIDU</p>
+                    <div class="flex space-x-2">
+                      <input type="text" id="input-murid-baru" placeholder="Cth: Ahmad Faiz" class="flex-1 border border-gray-200 bg-white rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#2b7a5a] outline-none" required> 
+                      <button type="submit" class="bg-[#2b7a5a] hover:bg-[#1e5c43] text-white font-bold rounded-xl px-5 py-2.5 text-sm transition shadow-sm whitespace-nowrap">
+                        Tambah Murid
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+              
+              <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-6">
+                <h3 class="text-sm font-bold text-emerald-800 mb-2 flex items-center uppercase tracking-wide">
+                  <i data-lucide="upload" class="w-4 h-4 mr-2"></i>
+                  Pilihan 2: Muat Naik Fail Excel
+                </h3>
+                <div class="text-xs text-emerald-600 mb-4 leading-relaxed space-y-1">
+                  <p class="font-bold">Panduan format muat naik Excel:</p>
+                  <ol class="list-decimal ml-4 space-y-1 font-medium">
+                    <li>Sediakan senarai murid dalam fail Excel.</li>
+                    <li>Pastikan nama murid berada di <b>Lajur Pertama (Lajur A)</b>.</li>
+                    <li>Sistem akan mendaftarkan nama murid secara automatik ke kelas terpilih di atas.</li>
+                  </ol>
+                </div>
+                
+                <label class="w-full bg-white border-2 border-dashed border-emerald-300 hover:border-emerald-500 hover:bg-emerald-50 text-emerald-700 font-bold rounded-xl px-4 py-6 transition shadow-sm flex flex-col justify-center items-center cursor-pointer"> 
+                  <i data-lucide="file-spreadsheet" class="w-8 h-8 mb-2 text-emerald-500"></i> 
+                  <span>Pilih Fail Excel (.xlsx / .csv)</span> 
+                  <input type="file" id="file-upload" accept=".csv,.xlsx,.xls" onchange="handleFileUpload(event)" class="hidden"> 
+                </label>
+              </div>
+            </div>
+            
+            <!-- Right Panel: Manage & Delete Class/Students -->
+            <div class="bg-white border border-red-100 shadow-sm rounded-xl p-6 h-fit">
+              <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                <i data-lucide="alert-triangle" class="w-5 h-5 mr-2 text-red-500"></i>
+                Padam / Kemas Kini Kelas &amp; Murid
+              </h3>
+              
+              <div class="space-y-4">
+                <div>
+                  <label class="text-xs font-bold text-gray-600 tracking-wide uppercase">Pilih Kelas Untuk Urus</label> 
+                  <select id="urus-kelas" onchange="renderUrusKelas()" class="w-full mt-1 border border-gray-200 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-red-400 outline-none"> 
+                    <option value="">-- Senarai Kelas Sedia Ada --</option> 
+                  </select>
+                </div>
+                
+                <div id="urus-panel" class="hidden space-y-4 pt-4 border-t border-gray-100">
+                  <div class="flex justify-between items-center">
+                    <span class="text-sm font-bold text-gray-700">Senarai Murid Berdaftar:</span>
+                    <button onclick="hapusSeluruhKelas()" class="text-red-600 hover:text-red-800 font-bold text-xs flex items-center transition">
+                      <i data-lucide="trash-2" class="w-4 h-4 mr-1"></i>Padam Kelas &amp; Murid
+                    </button>
+                  </div>
+                  
+                  <div id="urus-murid-list" class="max-h-[300px] overflow-y-auto divide-y divide-gray-100 border border-gray-100 rounded-xl p-3 bg-gray-50/50 space-y-1">
+                    <!-- Dynamic child node items -->
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // --- STATE VARIABLES ---
+    let senaraiKelas = [];
+    let senaraiMurid = {};
+    let senaraiRekod = [];
+    let activeTab = 'Input';
+    let perincian = 'Biasa';
+    let modalConfirmFn = null;
+    let selectedKelas = '';
+    
+    // Fallback Mock State when Firebase configuration acts up or is initialized blank
+    let isFirebaseReady = false;
+    let db = null;
+    let auth = null;
+    
+    // Safe environment checks
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'e-tasmik-cb747'; // Set default APP ID to project ID matching user's firebase project
+    const rootPathPublic = `/artifacts/${appId}/public/data`;
+
+    // --- FIREBASE INITIALIZATION & AUTH ---
+    async function initFirebase() {
+      try {
+        // Konfigurasi Firebase dari pengguna (e-tasmik-cb747)
+        const firebaseConfig = {
+          apiKey: "AIzaSyD1uFYozolVIk1NZcOYdURbGehIoGsEHP8",
+          authDomain: "e-tasmik-cb747.firebaseapp.com",
+          projectId: "e-tasmik-cb747",
+          storageBucket: "e-tasmik-cb747.firebasestorage.app",
+          messagingSenderId: "941612235399",
+          appId: "1:941612235399:web:99a53b58a34a22b0945622"
+        };
+        
+        // Kompatibiliti inisialisasi untuk fail index.html berasaskan script tags
+        const firebaseApp = firebase.initializeApp(firebaseConfig);
+        db = firebaseApp.firestore();
+        auth = firebaseApp.auth();
+
+        // Menggunakan Anonymous Authentication yang sedia aktif di Firebase Console anda
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await auth.signInWithCustomToken(__initial_auth_token);
+        } else {
+          await auth.signInAnonymously();
+        }
+
+        auth.onAuthStateChanged(async (user) => {
+          if (user) {
+            isFirebaseReady = true;
+            document.getElementById('sync-status').className = "inline-flex items-center px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 shadow-sm backdrop-blur-md";
+            document.getElementById('sync-status').innerHTML = `<span class="relative flex h-2.5 w-2.5 mr-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span></span>SINKRONISASI AWAN AKTIF`;
+            setupFirestoreListeners();
+          } else {
+            isFirebaseReady = false;
+          }
+        });
+      } catch (err) {
+        console.warn("Firebase Init failed or restricted. Transitioning to local simulation mode.", err);
+        setupFallbackLocalStorage();
+      }
+    }
+
+    // --- FALLBACK STORAGE (LOCAL) ---
+    function setupFallbackLocalStorage() {
+      isFirebaseReady = false;
+      document.getElementById('sync-status').className = "inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-medium bg-amber-500/20 text-amber-300 border border-amber-500/20";
+      document.getElementById('sync-status').innerHTML = `<span class="w-2 h-2 mr-1.5 bg-amber-400 rounded-full"></span>MOD TEMPATAN`;
+      
+      // Load initial state mock values
+      const defaultKelas = ["1 Al-Farabi", "1 Ibn Sina", "2 Al-Ghazali", "2 Al-Kindi"];
+      const defaultMurid = {
+        "1 Al-Farabi": ["Ahmad Danish", "Aishah Humaira", "Muhammad Ali", "Nurul Iman"],
+        "1 Ibn Sina": ["Adam Harith", "Fatimah Azzahra", "Muhammad Yusuf", "Sofea Insyirah"],
+        "2 Al-Ghazali": ["Akram Daniel", "Hana Maisarah", "Khalish Nu'man", "Zara Sofea"],
+        "2 Al-Kindi": ["Adli Wafi", "Maryam Jamilah", "Muhammad Aqil", "Puteri Balqis"]
+      };
+
+      senaraiKelas = JSON.parse(localStorage.getItem('tasmik_kelas')) || defaultKelas;
+      senaraiMurid = JSON.parse(localStorage.getItem('tasmik_murid')) || defaultMurid;
+      senaraiRekod = JSON.parse(localStorage.getItem('tasmik_rekod')) || [];
+
+      updateStats();
+      refreshInputKelas();
+      refreshTetapanSelects();
+      renderRekod();
+    }
+
+    // Save fallback changes to localStorage
+    function saveLocalData() {
+      if (!isFirebaseReady) {
+        localStorage.setItem('tasmik_kelas', JSON.stringify(senaraiKelas));
+        localStorage.setItem('tasmik_murid', JSON.stringify(senaraiMurid));
+        localStorage.setItem('tasmik_rekod', JSON.stringify(senaraiRekod));
+        updateStats();
+      }
+    }
+
+    // --- FIRESTORE LISTENERS ---
+    function setupFirestoreListeners() {
+      if (!db || !isFirebaseReady) return;
+
+      // Listen for Classes (Document structure format)
+      db.collection(`${rootPathPublic}/classes`).onSnapshot((snapshot) => {
+        senaraiKelas = [];
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          if (data.kelasName) {
+            senaraiKelas.push(data.kelasName);
+          }
+        });
+        
+        // Sort classes alphabetically
+        senaraiKelas.sort();
+        
+        // Match lists
+        senaraiKelas.forEach(k => {
+          if (!senaraiMurid[k]) senaraiMurid[k] = [];
+        });
+
+        refreshInputKelas();
+        refreshTetapanSelects();
+        updateStats();
+      }, (err) => {
+        console.error("Error reading classes", err);
+        handleFirebaseError(err, "membaca data kelas");
+      });
+
+      // Listen for Students
+      db.collection(`${rootPathPublic}/students`).onSnapshot((snapshot) => {
+        // Reset and rebuild students map
+        senaraiKelas.forEach(k => senaraiMurid[k] = []);
+        
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          if (data.kelasName && data.muridName) {
+            if (!senaraiMurid[data.kelasName]) {
+              senaraiMurid[data.kelasName] = [];
+            }
+            if (!senaraiMurid[data.kelasName].includes(data.muridName)) {
+              senaraiMurid[data.kelasName].push(data.muridName);
+            }
+          }
+        });
+
+        // Sort students within classes alphabetically
+        Object.keys(senaraiMurid).forEach(k => {
+          senaraiMurid[k].sort();
+        });
+
+        refreshInputKelas();
+        refreshTetapanSelects();
+        updateStats();
+        if (activeTab === 'Analisis') renderAnalisis();
+      }, (err) => {
+        console.error("Error reading students", err);
+        handleFirebaseError(err, "membaca data murid");
+      });
+
+      // Listen for Tasmik Records
+      db.collection(`${rootPathPublic}/records`).onSnapshot((snapshot) => {
+        senaraiRekod = [];
+        snapshot.forEach(doc => {
+          const r = doc.data();
+          r.id = doc.id;
+          senaraiRekod.push(r);
+        });
+
+        // Sort by timestamp or tarikh descending
+        senaraiRekod.sort((a, b) => new Date(b.tarikh + ' ' + (b.masa || '00:00')) - new Date(a.tarikh + ' ' + (a.masa || '00:00')));
+
+        updateStats();
+        renderRekod();
+        if (activeTab === 'Analisis') renderAnalisis();
+      }, (err) => {
+        console.error("Error reading records", err);
+        handleFirebaseError(err, "membaca data tasmik");
+      });
+    }
+
+    // --- FIREBASE ERROR INTERCEPTOR & HANDLER ---
+    function handleFirebaseError(err, konteks) {
+      console.error(`Ralat Firebase semasa ${konteks}:`, err);
+      
+      const isPermissionDenied = err.code === 'permission-denied' || 
+                                 (err.message && err.message.toLowerCase().includes('permission')) ||
+                                 (err.message && err.message.toLowerCase().includes('denied'));
+      
+      const isAuthError = err.code === 'auth/operation-not-allowed' || 
+                           (err.message && err.message.toLowerCase().includes('auth'));
+
+      if (isPermissionDenied) {
+        showModal(
+          "⚠️ Akses Pangkalan Data Disekat (Rules)",
+          `<div class="space-y-3 text-left">
+            <p class="font-semibold text-red-600">Gagal ${konteks} kerana Firestore Database menyekat akses (Missing/Insufficient Permissions).</p>
+            <p class="font-bold text-gray-800 mt-2">Sila lakukan pembetulan berikut di Firebase Console anda:</p>
+            <ol class="list-decimal ml-5 space-y-1.5 text-xs text-gray-700 font-medium">
+              <li>Buka <a href="https://console.firebase.google.com/" target="_blank" class="text-blue-600 underline">Firebase Console</a> -> Pilih projek <b>e-tasmik-cb747</b>.</li>
+              <li>Pergi ke <b>Firestore Database</b> di menu kiri -> Klik tab <b>Rules</b> di bahagian atas.</li>
+              <li>Gantikan kod Rules sedia ada dengan kod berikut sepenuhnya:</li>
+            </ol>
+            <pre class="bg-gray-800 text-green-400 p-3 rounded-xl text-[11px] font-mono my-2 overflow-x-auto block leading-relaxed select-all">
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}</pre>
+            <ol start="4" class="list-decimal ml-5 space-y-1.5 text-xs text-gray-700 font-medium">
+              <li>Klik butang <b class="bg-blue-600 text-white px-1.5 py-0.5 rounded">Publish</b> di bahagian atas kanan.</li>
+              <li>Tunggu 1 minit, kemudian muat semula (refresh) laman web e-Tasmik anda dan cuba lagi.</li>
+            </ol>
+            <p class="text-[10px] text-gray-400 italic mt-3">Nota keselamatan: Anda juga boleh menukar syarat keselamatan kepada "allow read, write: if request.auth != null;" selepas mengaktifkan Anonymous Auth untuk keselamatan tambahan.</p>
+          </div>`,
+          () => {} // Just close the modal
+        );
+        // Change the modal icon to a warning icon and change confirmation button text
+        document.getElementById('modal-icon').className = 'w-7 h-7 text-amber-500';
+        document.getElementById('modal-confirm-btn').innerHTML = 'Faham & Coba';
+      } else if (isAuthError) {
+        showModal(
+          "⚠️ Log Masuk Tanpa Nama Disekat (Auth)",
+          `<div class="space-y-3 text-left">
+            <p class="font-semibold text-red-600">Gagal ${konteks} kerana fungsi Log Masuk Tanpa Nama (Anonymous Sign-In) belum diaktifkan di Firebase.</p>
+            <p class="font-bold text-gray-800">Sila aktifkan dengan langkah berikut:</p>
+            <ol class="list-decimal ml-5 space-y-1 text-xs text-gray-700 font-medium">
+              <li>Buka Firebase Console -> Pergi ke menu <b>Authentication</b> di sebelah kiri.</li>
+              <li>Klik tab <b>Sign-in method</b> di bahagian atas.</li>
+              <li>Klik <b>Add new provider</b> -> Pilih <b>Anonymous</b>.</li>
+              <li>Klik butang toggle <b>Enable</b> dan kemudian klik <b>Save</b>.</li>
+              <li>Muat semula laman web e-Tasmik anda.</li>
+            </ol>
+          </div>`,
+          () => {}
+        );
+      } else {
+        showToast(`Ralat semasa ${konteks}: ${err.message || err}`);
+      }
+    }
+
+    // --- CORE EVENT HANDLERS & WRITERS ---
+
+    // 1. Add Class
+    async function handleTambahKelas(e) {
+      e.preventDefault();
+      const input = document.getElementById('input-kelas-baru');
+      const newClass = input.value.trim().toUpperCase();
+      if (!newClass) return;
+
+      if (senaraiKelas.includes(newClass)) {
+        showToast("Kelas ini sudah didaftarkan.");
+        return;
+      }
+
+      if (isFirebaseReady) {
+        try {
+          // Document ID safely path encoded
+          await db.collection(`${rootPathPublic}/classes`).doc(newClass.replace(/\//g, '_')).set({
+            kelasName: newClass
+          });
+          showToast(`Kelas ${newClass} berjaya didaftarkan!`);
+        } catch (err) {
+          handleFirebaseError(err, "menambah kelas");
+        }
+      } else {
+        senaraiKelas.push(newClass);
+        senaraiKelas.sort();
+        senaraiMurid[newClass] = [];
+        saveLocalData();
+        refreshInputKelas();
+        refreshTetapanSelects();
+        showToast(`Kelas ${newClass} berjaya didaftarkan secara tempatan!`);
+      }
+
+      input.value = '';
+    }
+
+    // 2. Add Student
+    async function handleTambahMurid(e) {
+      e.preventDefault();
+      const selectClass = document.getElementById('tetapan-kelas').value;
+      const input = document.getElementById('input-murid-baru');
+      const newStudent = input.value.trim();
+      
+      if (!selectClass || !newStudent) return;
+
+      if (senaraiMurid[selectClass] && senaraiMurid[selectClass].includes(newStudent)) {
+        showToast("Nama murid ini sudah wujud dalam kelas.");
+        return;
+      }
+
+      if (isFirebaseReady) {
+        try {
+          const studentDocId = `${selectClass}_${newStudent}`.replace(/[\/.\s]/g, '_');
+          await db.collection(`${rootPathPublic}/students`).doc(studentDocId).set({
+            kelasName: selectClass,
+            muridName: newStudent
+          });
+          showToast(`Murid ${newStudent} dimasukkan ke ${selectClass}!`);
+        } catch (err) {
+          handleFirebaseError(err, "menambah murid");
+        }
+      } else {
+        if (!senaraiMurid[selectClass]) senaraiMurid[selectClass] = [];
+        senaraiMurid[selectClass].push(newStudent);
+        senaraiMurid[selectClass].sort();
+        saveLocalData();
+        refreshTetapanSelects();
+        showToast(`Murid ${newStudent} dimasukkan ke ${selectClass} secara tempatan!`);
+      }
+
+      input.value = '';
+    }
+
+    // 3. Delete Single Student
+    async function hapusMurid(kelas, murid) {
+      showModal(
+        "Sahkan Hapus Murid", 
+        `Adakah anda pasti mahu memadam murid ${murid} dari kelas ${kelas}? Semua rekod tasmik yang bersangkutan akan kekal namun nama murid dipadamkan daripada senarai kelas.`,
+        async () => {
+          if (isFirebaseReady) {
+            try {
+              const studentDocId = `${kelas}_${murid}`.replace(/[\/.\s]/g, '_');
+              await db.collection(`${rootPathPublic}/students`).doc(studentDocId).delete();
+              showToast("Murid berjaya dipadamkan.");
+              renderUrusKelas();
+            } catch (err) {
+              handleFirebaseError(err, "memadam murid");
+            }
+          } else {
+            senaraiMurid[kelas] = senaraiMurid[kelas].filter(m => m !== murid);
+            saveLocalData();
+            renderUrusKelas();
+            showToast("Murid dipadamkan secara tempatan.");
+          }
+        }
+      );
+    }
+
+    // 4. Delete Entire Class
+    async function hapusSeluruhKelas() {
+      const kelas = document.getElementById('urus-kelas').value;
+      if (!kelas) return;
+
+      showModal(
+        "Sahkan Hapus Kelas", 
+        `Adakah anda pasti mahu memadam seluruh kelas ${kelas}? Ini akan memadam semua senarai murid yang berdaftar di bawah kelas ini.`,
+        async () => {
+          if (isFirebaseReady) {
+            try {
+              // Delete students belonging to this class
+              const studentsSnapshot = await db.collection(`${rootPathPublic}/students`).where('kelasName', '==', kelas).get();
+              const batch = db.batch();
+              studentsSnapshot.forEach(doc => batch.delete(doc.ref));
+              
+              // Delete the class doc
+              const classDocId = kelas.replace(/\//g, '_');
+              batch.delete(db.collection(`${rootPathPublic}/classes`).doc(classDocId));
+              
+              await batch.commit();
+              document.getElementById('urus-kelas').value = '';
+              document.getElementById('urus-panel').classList.add('hidden');
+              showToast(`Kelas ${kelas} berjaya didadam.`);
+            } catch (err) {
+              handleFirebaseError(err, "memadam kelas");
+            }
+          } else {
+            senaraiKelas = senaraiKelas.filter(k => k !== kelas);
+            delete senaraiMurid[kelas];
+            saveLocalData();
+            document.getElementById('urus-kelas').value = '';
+            document.getElementById('urus-panel').classList.add('hidden');
+            refreshTetapanSelects();
+            refreshInputKelas();
+            showToast(`Kelas ${kelas} dipadam secara tempatan.`);
+          }
+        }
+      );
+    }
+
+    // 5. Submit New Tasmik Record
+    async function handleSubmit(e) {
+      e.preventDefault();
+      const tarikh = document.getElementById('input-tarikh').value;
+      const kelas = document.getElementById('input-kelas').value;
+      const murid = document.getElementById('input-murid').value;
+      const jenisBacaan = document.getElementById('input-jenis').value;
+      
+      if (!tarikh || !kelas || !murid) {
+        showToast("Sila lengkapkan semua maklumat.");
+        return;
+      }
+
+      const rawMasa = new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: false });
+      const recordId = 'rekod-' + Date.now();
+      
+      let newRecord = {
+        tarikh: tarikh,
+        masa: rawMasa,
+        kelas: kelas,
+        murid: murid,
+        jenisBacaan: jenisBacaan,
+        perincian: perincian,
+        timestamp: Date.now()
+      };
+
+      if (perincian === 'Biasa') {
+        if (jenisBacaan === 'Al-Quran') {
+          newRecord.mukaSurat = document.getElementById('input-muka').value || '';
+          newRecord.juzuk = document.getElementById('input-juzuk').value.replace('Juzuk ', '') || '';
+          newRecord.surahAyat = document.getElementById('input-surah').value || '';
+        } else {
+          newRecord.surahAyat = document.getElementById('input-surah').value || '';
+        }
+      }
+
+      const saveBtn = e.target.querySelector('button[type="submit"]');
+      const originalText = saveBtn.innerHTML;
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin mr-2"></i>Menyimpan...`;
+      lucide.createIcons();
+
+      if (isFirebaseReady) {
+        try {
+          await db.collection(`${rootPathPublic}/records`).doc(recordId).set(newRecord);
+          showToast(`Berjaya menyimpan rekod ${murid}!`);
+          resetFormInputOnly();
+        } catch (err) {
+          handleFirebaseError(err, "menyimpan rekod bacaan");
+        }
+      } else {
+        newRecord.id = recordId;
+        senaraiRekod.unshift(newRecord);
+        saveLocalData();
+        renderRekod();
+        showToast(`Berjaya menyimpan rekod ${murid} (mod tempatan)!`);
+        resetFormInputOnly();
+      }
+
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = originalText;
+      lucide.createIcons();
+    }
+
+    function resetFormInputOnly() {
+      // Keep selected kelas and tarikh for fast bulk entry, reset student and details
+      document.getElementById('input-murid').value = '';
+      document.getElementById('input-muka').value = '';
+      document.getElementById('input-juzuk').value = '';
+      document.getElementById('input-surah').value = '';
+      setPerincian('Biasa');
+      
+      // Padam tetingkap rujukan bacaan terdahulu
+      document.getElementById('info-bacaan-terdahulu').classList.add('hidden');
+    }
+
+    // 6. Delete Tasmik Record
+    async function hapusRekod(id) {
+      showModal("Sahkan Padam Rekod", "Adakah anda pasti mahu memadam rekod tasmik ini? Tindakan ini tidak boleh diundurkan.", async () => {
+        if (isFirebaseReady) {
+          try {
+            await db.collection(`${rootPathPublic}/records`).doc(id).delete();
+            showToast("Rekod berjaya dipadamkan.");
+          } catch (err) {
+            handleFirebaseError(err, "memadam rekod bacaan");
+          }
+        } else {
+          senaraiRekod = senaraiRekod.filter(r => r.id !== id);
+          saveLocalData();
+          renderRekod();
+          showToast("Rekod berjaya dipadamkan secara tempatan.");
+        }
+      });
+    }
+
+    // --- RENDER & REFRESH UI FUNCTIONS ---
+
+    function updateStats() {
+      // Dyn calculation
+      const totalMurid = Object.values(senaraiMurid).reduce((acc, curr) => acc + curr.length, 0);
+      const totalKelas = senaraiKelas.length;
+      
+      const today = new Date().toISOString().split('T')[0];
+      const todayCount = senaraiRekod.filter(r => r.tarikh === today).length;
+
+      document.getElementById('stat-murid').innerText = totalMurid;
+      document.getElementById('stat-kelas').innerText = totalKelas;
+      document.getElementById('stat-rekod').innerText = todayCount;
+    }
+
+    function switchTab(tab) {
+      activeTab = tab;
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById('tab-' + tab).classList.remove('hidden');
+      
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        if (btn.dataset.tab === tab) {
+          btn.className = 'tab-btn flex-1 py-3 px-4 text-center rounded-lg text-sm font-bold transition-all flex items-center justify-center bg-white text-[#2b7a5a] shadow-sm';
+        } else {
+          btn.className = 'tab-btn flex-1 py-3 px-4 text-center rounded-lg text-sm font-bold transition-all flex items-center justify-center text-gray-500 hover:text-[#2b7a5a] hover:bg-white/50';
+        }
+      });
+
+      if (tab === 'Analisis') {
+        renderAnalisis();
+      } else if (tab === 'Rekod') {
+        renderRekod();
+      } else if (tab === 'Tetapan') {
+        refreshTetapanSelects();
+      }
+      lucide.createIcons();
+    }
+
+    function populateKelasSelect(selectEl, selectedVal = '') {
+      selectEl.innerHTML = '<option value="">-- Pilih Kelas --</option>' + 
+        senaraiKelas.map(k => `<option value="${k}" ${k === selectedVal ? 'selected' : ''}>${k}</option>`).join('');
+    }
+
+    // Refresh selects
+    function refreshTetapanSelects() {
+      populateKelasSelect(document.getElementById('tetapan-kelas'));
+      populateKelasSelect(document.getElementById('urus-kelas'), selectedKelas);
+    }
+
+    // Popula dropdown
+    function refreshInputKelas() {
+      populateKelasSelect(document.getElementById('input-kelas'), selectedKelas);
+    }
+
+    // --- MANAGE SELECTION ---
+    function onKelasChange() {
+      const kelas = document.getElementById('input-kelas').value;
+      selectedKelas = kelas;
+      const muridSel = document.getElementById('input-murid');
+      
+      // Sembunyikan kad info terdahulu apabila kelas bertukar
+      document.getElementById('info-bacaan-terdahulu').classList.add('hidden');
+      
+      if (kelas) {
+        const list = senaraiMurid[kelas] || [];
+        muridSel.disabled = false;
+        muridSel.innerHTML = '<option value="">-- Pilih Murid --</option>' + 
+          list.map(m => `<option value="${m}">${m}</option>`).join('');
+      } else {
+        muridSel.disabled = true;
+        muridSel.innerHTML = '<option value="">Pilih Kelas Dahulu</option>';
+      }
+    }
+
+    // On Murid Change - Memaparkan rujukan bacaan terakhir murid dengan kemas
+    function onMuridChange() {
+      const kelas = document.getElementById('input-kelas').value;
+      const murid = document.getElementById('input-murid').value;
+      const infoBox = document.getElementById('info-bacaan-terdahulu');
+      const infoTeks = document.getElementById('info-bacaan-teks');
+      const infoMeta = document.getElementById('info-bacaan-meta');
+      
+      if (!kelas || !murid) {
+        infoBox.classList.add('hidden');
+        return;
+      }
+      
+      // Cari rekod terakhir murid ini daripada susunan rekod semasa
+      const studentRecords = senaraiRekod.filter(r => r.murid === murid && r.kelas === kelas);
+      
+      if (studentRecords.length > 0) {
+        const latest = studentRecords[0]; // Rekod terbaharu berada di indeks 0
+        let bacaanStr = "";
+        
+        if (latest.perincian === 'Khatam') {
+          bacaanStr = `<span class="text-purple-700 font-extrabold flex items-center gap-1"><i data-lucide="award" class="w-4 h-4"></i>👑 KHATAM AL-QURAN</span>`;
+        } else if (latest.jenisBacaan === 'Al-Quran') {
+          bacaanStr = `<span class="text-emerald-700 font-bold">Al-Quran (Juzuk ${latest.juzuk || '-'})</span>`;
+          let details = [];
+          if (latest.mukaSurat) details.push(`Muka Surat ${latest.mukaSurat}`);
+          if (latest.surahAyat) details.push(latest.surahAyat);
+          if (details.length > 0) {
+            bacaanStr += ` — <span class="text-gray-700 font-semibold text-xs">${details.join(" | ")}</span>`;
+          }
+        } else {
+          bacaanStr = `<span class="text-blue-700 font-bold">${latest.jenisBacaan}</span>`;
+          if (latest.surahAyat) {
+            bacaanStr += ` — <span class="text-gray-700 font-semibold text-xs">${latest.surahAyat}</span>`;
+          }
+        }
+        
+        infoTeks.innerHTML = bacaanStr;
+        infoMeta.innerHTML = `<span class="flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> Tarikh Sesi Terakhir: ${latest.tarikh} ${latest.masa ? 'Jam ' + latest.masa : ''}</span>`;
+        infoBox.classList.remove('hidden');
+      } else {
+        infoTeks.innerHTML = `<span class="text-gray-500 font-normal italic">Murid ini baru memulakan sesi tasmik (tiada rekod lampau).</span>`;
+        infoMeta.innerHTML = `Sila isikan rekod bacaan pertama murid di bawah.`;
+        infoBox.classList.remove('hidden');
+      }
+      lucide.createIcons();
+    }
+
+    // On Jenis Change
+    function onJenisChange() {
+      const jenis = document.getElementById('input-jenis').value;
+      const qf = document.getElementById('quran-fields');
+      if (jenis === 'Al-Quran') {
+        qf.querySelector('.flex.space-x-2').classList.remove('hidden');
+        document.getElementById('input-surah').placeholder = 'Surah & Ayat (Pilihan)';
+      } else {
+        qf.querySelector('.flex.space-x-2').classList.add('hidden');
+        document.getElementById('input-surah').placeholder = 'Surah / Muka Surat (Cth: Iqra ms 14)';
+      }
+    }
+
+    function setPerincian(type) {
+      perincian = type;
+      const biasa = document.getElementById('btn-biasa');
+      const khatam = document.getElementById('btn-khatam');
+      
+      if (type === 'Biasa') {
+        biasa.className = 'flex-1 border rounded-xl py-2 px-4 flex items-center justify-center cursor-pointer transition bg-[#e0f0e9] border-[#2b7a5a] text-[#2b7a5a]';
+        khatam.className = 'flex-1 border rounded-xl py-2 px-4 flex items-center justify-center cursor-pointer transition border-gray-200 bg-gray-50 text-gray-600';
+        biasa.querySelector('input').checked = true;
+        khatam.querySelector('input').checked = false;
+        
+        document.getElementById('input-muka').disabled = false;
+        document.getElementById('input-surah').disabled = false;
+      } else {
+        khatam.className = 'flex-1 border rounded-xl py-2 px-4 flex items-center justify-center cursor-pointer transition bg-[#e0f0e9] border-[#2b7a5a] text-[#2b7a5a]';
+        biasa.className = 'flex-1 border rounded-xl py-2 px-4 flex items-center justify-center cursor-pointer transition border-gray-200 bg-gray-50 text-gray-600';
+        khatam.querySelector('input').checked = true;
+        biasa.querySelector('input').checked = false;
+        
+        document.getElementById('input-muka').disabled = true;
+        document.getElementById('input-surah').disabled = true;
+      }
+    }
+
+    // Auto calculate juzuk
+    function autoJuzuk() {
+      const page = parseInt(document.getElementById('input-muka').value);
+      let juzuk = '';
+      if (page >= 1 && page <= 604) {
+        if (page < 22) juzuk = '1';
+        else juzuk = String(Math.min(Math.floor((page - 2) / 20) + 1, 30));
+      }
+      document.getElementById('input-juzuk').value = juzuk ? `Juzuk ${juzuk}` : '';
+    }
+
+    // Render Today's Records List
+    function renderRekod() {
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Update human date display format
+      const opt = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      document.getElementById('today-date-str').textContent = new Date().toLocaleDateString('ms-MY', opt);
+
+      const todayRecords = senaraiRekod.filter(r => r.tarikh === today);
+      const tbody = document.getElementById('rekod-tbody');
+
+      if (todayRecords.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-400 italic">Tiada rekod tasmik didaftarkan hari ini. Sila masukkan rekod di ruangan 'Input'.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = todayRecords.map(r => {
+        let maklumat = '';
+        if (r.perincian === 'Khatam') {
+          maklumat = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-800"><i data-lucide="award" class="w-3 h-3 mr-1"></i>KHATAM</span>`;
+        } else if (r.jenisBacaan === 'Al-Quran') {
+          const partMs = r.mukaSurat ? `MS ${r.mukaSurat}` : '';
+          const partJuz = r.juzuk ? `<span class="text-emerald-700 font-bold ml-1">(Juz ${r.juzuk})</span>` : '';
+          const partSurah = r.surahAyat ? `<div class="text-xs text-gray-500 mt-0.5">${r.surahAyat}</div>` : '';
+          maklumat = `<div>${partMs} ${partJuz} ${partSurah}</div>`;
+        } else {
+          maklumat = `<span class="text-gray-700">${r.surahAyat || 'Muka surat tidak dinyatakan'}</span>`;
+        }
+
+        const isQuran = r.jenisBacaan === 'Al-Quran';
+        const badgeClass = isQuran ? 'bg-emerald-100 text-emerald-800 font-semibold' : 'bg-blue-100 text-blue-800 font-semibold';
+
+        return `
+          <tr class="hover:bg-gray-50/80 transition text-sm text-gray-700">
+            <td class="p-4 font-semibold text-gray-900">${r.masa || '--:--'}</td>
+            <td class="p-4 text-xs font-bold text-gray-500">${r.kelas}</td>
+            <td class="p-4 font-bold text-gray-900">${r.murid}</td>
+            <td class="p-4"><span class="px-2.5 py-1 rounded-full text-xs ${badgeClass}">${r.jenisBacaan}</span></td>
+            <td class="p-4 text-xs">${maklumat}</td>
+            <td class="p-4 text-right">
+              <button onclick="hapusRekod('${r.id}')" class="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded-lg transition" title="Padam Rekod">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    // --- MANAGE CLASS TAB UI ---
+    function renderUrusKelas() {
+      const kelas = document.getElementById('urus-kelas').value;
+      const panel = document.getElementById('urus-panel');
+      const listContainer = document.getElementById('urus-murid-list');
+
+      if (!kelas) {
+        panel.classList.add('hidden');
+        return;
+      }
+
+      panel.classList.remove('hidden');
+      const murid = senaraiMurid[kelas] || [];
+
+      if (murid.length === 0) {
+        listContainer.innerHTML = `<p class="p-4 text-center text-xs text-gray-400 italic">Tiada murid berdaftar dalam kelas ini.</p>`;
+        return;
+      }
+
+      listContainer.innerHTML = murid.map(m => `
+        <div class="flex justify-between items-center py-2 px-3 hover:bg-white rounded-lg transition">
+          <span class="text-sm font-semibold text-gray-800">${m}</span>
+          <button onclick="hapusMurid('${kelas}', '${m}')" class="text-red-400 hover:text-red-600 p-1 rounded transition" title="Padam Murid">
+            <i data-lucide="user-x" class="w-4 h-4"></i>
+          </button>
+        </div>
+      `).join('');
+      
+      lucide.createIcons();
+    }
+
+    // --- EXCEL FILE IMPORT ---
+    function handleFileUpload(e) {
+      const selectClass = document.getElementById('tetapan-kelas').value;
+      if (!selectClass) {
+        showToast("Sila pilih kelas tujuan dahulu di atas.");
+        e.target.value = '';
+        return;
+      }
+
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async function(evt) {
+        try {
+          const data = new Uint8Array(evt.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheet = workbook.SheetNames[0];
+          const sheet = workbook.Sheets[firstSheet];
+          const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+          
+          let count = 0;
+          let failedCount = 0;
+          
+          for (let i = 0; i < json.length; i++) {
+            const row = json[i];
+            if (row && row[0]) {
+              const studentName = String(row[0]).trim();
+              
+              // Skip baris yang kosong atau mengandungi kata kunci pengepala Excel
+              if (studentName && !["NAMA MURID", "NAMA", "NAMA/KELAS", "NAME", "STUDENT NAME", "NAMA KELAS"].includes(studentName.toUpperCase())) {
+                try {
+                  if (isFirebaseReady) {
+                    // Bersihkan nama & kelas untuk mengelakkan aksara khas merosakkan ID dokumen Firebase
+                    const sanitizedName = studentName.replace(/[^a-zA-Z0-9\s-_]/g, '').replace(/\s+/g, '_');
+                    const sanitizedClass = selectClass.replace(/[^a-zA-Z0-9\s-_]/g, '').replace(/\s+/g, '_');
+                    const studentDocId = `${sanitizedClass}_${sanitizedName}`;
+                    
+                    await db.collection(`${rootPathPublic}/students`).doc(studentDocId).set({
+                      kelasName: selectClass,
+                      muridName: studentName
+                    });
+                  } else {
+                    if (!senaraiMurid[selectClass]) {
+                      senaraiMurid[selectClass] = [];
+                    }
+                    if (!senaraiMurid[selectClass].includes(studentName)) {
+                      senaraiMurid[selectClass].push(studentName);
+                    }
+                  }
+                  count++;
+                } catch (singleErr) {
+                  // Rekod jika terdapat baris spesifik yang gagal tanpa menjejaskan baris lain
+                  console.error(`Gagal memuat naik murid pada baris ${i + 1}: ${studentName}`, singleErr);
+                  failedCount++;
+                }
+              }
+            }
+          }
+
+          if (!isFirebaseReady) {
+            if (senaraiMurid[selectClass]) {
+              senaraiMurid[selectClass].sort();
+            }
+            saveLocalData();
+          }
+
+          if (failedCount > 0) {
+            showToast("Proses import sebahagian selesai.");
+          } else {
+            showToast(`Berjaya mengimport kesemua ${count} murid ke kelas ${selectClass}!`);
+          }
+          renderUrusKelas();
+        } catch (err) {
+          console.error("Ralat fail Excel:", err);
+          showToast("Format fail Excel tidak disokong atau fail rosak.");
+        }
+      };
+      reader.readAsArrayBuffer(file);
+      e.target.value = ''; // Reset input fail supaya boleh dipilih semula
+    }
+
+    // --- ANALYSIS ENGINE ---
+    function onFilterJenisChange() {
+      const type = document.getElementById('filter-jenis').value;
+      const valSel = document.getElementById('filter-nilai');
+      
+      if (type === 'kelas') {
+        valSel.classList.remove('hidden');
+        valSel.innerHTML = senaraiKelas.map(k => `<option value="${k}">${k}</option>`).join('');
+      } else {
+        valSel.classList.add('hidden');
+      }
+      renderAnalisis();
+    }
+
+    function renderAnalisis() {
+      const type = document.getElementById('filter-jenis').value;
+      const filterKelasVal = document.getElementById('filter-nilai').value;
+
+      let targetStudents = [];
+
+      // Collect targeted list
+      if (type === 'keseluruhan') {
+        Object.keys(senaraiMurid).forEach(k => {
+          senaraiMurid[k].forEach(m => {
+            targetStudents.push({ name: m, kelas: k });
+          });
+        });
+      } else {
+        if (filterKelasVal && senaraiMurid[filterKelasVal]) {
+          senaraiMurid[filterKelasVal].forEach(m => {
+            targetStudents.push({ name: m, kelas: filterKelasVal });
+          });
+        }
+      }
+
+      // Distribution Counts
+      let counts = {
+        iqra1: 0, iqra2: 0, iqra3: 0, iqra4: 0, iqra5: 0, iqra6: 0,
+        juz1_5: 0, juz6_10: 0, juz11_15: 0, juz16_20: 0, juz21_25: 0, juz26_30: 0,
+        khatam: 0,
+        belumMula: 0
+      };
+
+      // Process each student's latest record status
+      targetStudents.forEach(student => {
+        const studentRecords = senaraiRekod.filter(r => r.murid === student.name && r.kelas === student.kelas);
+        
+        if (studentRecords.length > 0) {
+          const latestRecord = studentRecords[0]; // Already sorted descending
+          
+          if (latestRecord.perincian === 'Khatam') {
+            counts.khatam++;
+          } else if (latestRecord.jenisBacaan === 'Al-Quran') {
+            const juz = parseInt(latestRecord.juzuk) || 1;
+            if (juz >= 1 && juz <= 5) counts.juz1_5++;
+            else if (juz >= 6 && juz <= 10) counts.juz6_10++;
+            else if (juz >= 11 && juz <= 15) counts.juz11_15++;
+            else if (juz >= 16 && juz <= 20) counts.juz16_20++;
+            else if (juz >= 21 && juz <= 25) counts.juz21_25++;
+            else if (juz >= 26 && juz <= 30) counts.juz26_30++;
+            else counts.juz1_5++; // Default fallback
+          } else if (latestRecord.jenisBacaan === "Iqra' 1") counts.iqra1++;
+          else if (latestRecord.jenisBacaan === "Iqra' 2") counts.iqra2++;
+          else if (latestRecord.jenisBacaan === "Iqra' 3") counts.iqra3++;
+          else if (latestRecord.jenisBacaan === "Iqra' 4") counts.iqra4++;
+          else if (latestRecord.jenisBacaan === "Iqra' 5") counts.iqra5++;
+          else if (latestRecord.jenisBacaan === "Iqra' 6") counts.iqra6++;
+        } else {
+          counts.belumMula++;
+        }
+      });
+
+      // Compute Total Subsets
+      const totalStudentsCount = targetStudents.length || 1; 
+      const totalIqra = counts.iqra1 + counts.iqra2 + counts.iqra3 + counts.iqra4 + counts.iqra5 + counts.iqra6;
+      const totalQuran = counts.juz1_5 + counts.juz6_10 + counts.juz11_15 + counts.juz16_20 + counts.juz21_25 + counts.juz26_30;
+
+      // Update Total Counts in badges
+      document.getElementById('iqra-total-badge').textContent = `${totalIqra} Murid`;
+      document.getElementById('quran-total-badge').textContent = `${totalQuran + counts.khatam} Murid`;
+
+      // Update Summary Cards
+      document.getElementById('summary-iqra-count').textContent = totalIqra;
+      document.getElementById('summary-iqra-pct').textContent = `(${((totalIqra / totalStudentsCount) * 100).toFixed(1)}%)`;
+
+      document.getElementById('summary-quran-count').textContent = totalQuran;
+      document.getElementById('summary-quran-pct').textContent = `(${((totalQuran / totalStudentsCount) * 100).toFixed(1)}%)`;
+
+      document.getElementById('summary-khatam-count').textContent = counts.khatam;
+      document.getElementById('summary-khatam-pct').textContent = `(${((counts.khatam / totalStudentsCount) * 100).toFixed(1)}%)`;
+
+      document.getElementById('summary-belum-count').textContent = counts.belumMula;
+      document.getElementById('summary-belum-pct').textContent = `(${((counts.belumMula / totalStudentsCount) * 100).toFixed(1)}%)`;
+
+      // Render IQRA Progress Bars
+      const iqraData = [
+        { label: "Iqra' 1", count: counts.iqra1, color: "bg-blue-400" },
+        { label: "Iqra' 2", count: counts.iqra2, color: "bg-blue-500" },
+        { label: "Iqra' 3", count: counts.iqra3, color: "bg-cyan-500" },
+        { label: "Iqra' 4", count: counts.iqra4, color: "bg-teal-500" },
+        { label: "Iqra' 5", count: counts.iqra5, color: "bg-emerald-500" },
+        { label: "Iqra' 6", count: counts.iqra6, color: "bg-indigo-600" }
+      ];
+
+      document.getElementById('iqra-statistics-bars').innerHTML = iqraData.map(item => {
+        const pct = ((item.count / totalStudentsCount) * 100).toFixed(1);
+        return `
+          <div>
+            <div class="flex justify-between text-xs font-semibold mb-1">
+              <span class="text-gray-700 font-bold">${item.label}</span>
+              <span class="text-gray-500">${item.count} Murid <span class="text-blue-600 ml-1">(${pct}%)</span></span>
+            </div>
+            <div class="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden">
+              <div class="${item.color} h-2.5 rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Render QURAN & KHATAM Progress Bars
+      const quranData = [
+        { label: "Al-Quran: Juz 1 - 5", count: counts.juz1_5, color: "bg-emerald-400" },
+        { label: "Al-Quran: Juz 6 - 10", count: counts.juz6_10, color: "bg-emerald-500" },
+        { label: "Al-Quran: Juz 11 - 15", count: counts.juz11_15, color: "bg-teal-600" },
+        { label: "Al-Quran: Juz 16 - 20", count: counts.juz16_20, color: "bg-cyan-600" },
+        { label: "Al-Quran: Juz 21 - 25", count: counts.juz21_25, color: "bg-indigo-500" },
+        { label: "Al-Quran: Juz 26 - 30", count: counts.juz26_30, color: "bg-purple-600" },
+        { label: "👑 Khatam Al-Quran", count: counts.khatam, color: "bg-gradient-to-r from-purple-500 to-pink-500" }
+      ];
+
+      document.getElementById('quran-statistics-bars').innerHTML = quranData.map(item => {
+        const pct = ((item.count / totalStudentsCount) * 100).toFixed(1);
+        return `
+          <div>
+            <div class="flex justify-between text-xs font-semibold mb-1">
+              <span class="text-gray-700 font-bold">${item.label}</span>
+              <span class="text-gray-500">${item.count} Murid <span class="text-emerald-600 ml-1">(${pct}%)</span></span>
+            </div>
+            <div class="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden">
+              <div class="${item.color} h-2.5 rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      lucide.createIcons();
+    }
+
+    // --- DAILY RECORDS EXCEL EXPORT (Today logs) ---
+    function eksportKeExcel() {
+      const today = new Date().toISOString().split('T')[0];
+      const todayRecords = senaraiRekod.filter(r => r.tarikh === today);
+
+      if (todayRecords.length === 0) {
+        showToast("Tiada rekod bertarikh hari ini untuk dieksport.");
+        return;
+      }
+
+      // Map data neatly for sheets
+      const exportData = todayRecords.map(r => ({
+        "Tarikh": r.tarikh,
+        "Masa": r.masa || '',
+        "Kelas": r.kelas,
+        "Nama Murid": r.murid,
+        "Jenis Bacaan": r.jenisBacaan,
+        "Status / Perincian": r.perincian === 'Khatam' ? 'KHATAM' : 'Biasa',
+        "Muka Surat": r.mukaSurat || '',
+        "Juzuk": r.juzuk || '',
+        "Surah / Maklumat Tambahan": r.surahAyat || ''
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Tasmik Hari Ini");
+
+      // Write with automated filename based on date stamp
+      XLSX.writeFile(workbook, `Rekod_Tasmik_Harian_${today}.xlsx`);
+      showToast("Sijil rekod berjaya dieksport ke Excel!");
+    }
+
+    // --- MASTER COMPREHENSIVE PERFORMANCE EXPORT (DENGAN REVOLUSI DAPATAN MENGIKUT TAPISAN KELAS) ---
+    function eksportLaporanPrestasiExcel() {
+      const filterJenis = document.getElementById('filter-jenis').value;
+      const filterKelasVal = document.getElementById('filter-nilai').value;
+
+      let allStudents = [];
+      let fileSuffix = "Lengkap";
+
+      // Syarat 1: Jika tapisan kelas sedang aktif pada tab Analisis, eksport bagi kelas itu sahaja
+      if (filterJenis === 'kelas' && filterKelasVal) {
+        fileSuffix = filterKelasVal.replace(/[^a-zA-Z0-9]/g, '_');
+        if (senaraiMurid[filterKelasVal]) {
+          senaraiMurid[filterKelasVal].forEach(muridName => {
+            allStudents.push({ name: muridName, kelas: filterKelasVal });
+          });
+        }
+      } else {
+        // Keseluruhan pelajar merentas semua kelas
+        Object.keys(senaraiMurid).forEach(kelas => {
+          senaraiMurid[kelas].forEach(muridName => {
+            allStudents.push({ name: muridName, kelas: kelas });
+          });
+        });
+      }
+
+      // Isih pelajar
+      allStudents.sort((a, b) => {
+        if (a.kelas !== b.kelas) return a.kelas.localeCompare(b.kelas);
+        return a.name.localeCompare(b.name);
+      });
+
+      if (allStudents.length === 0) {
+        showToast("Tiada senarai nama murid untuk dieksport.");
+        return;
+      }
+
+      // Statistics Accumulator
+      let counts = {
+        iqra1_3: 0,
+        iqra4_6: 0,
+        juz1_5: 0,
+        juz6_10: 0,
+        juz11_15: 0,
+        juz16_20: 0,
+        juz21_25: 0,
+        juz26_30: 0,
+        khatam: 0,
+        belumMula: 0
+      };
+
+      // Bina pengepala laporan mengikut jenis tapisan
+      const mainHeaderTitle = (filterJenis === 'kelas' && filterKelasVal)
+        ? `LAPORAN PRESTASI BACAAN TASMIK KELAS: ${filterKelasVal.toUpperCase()}`
+        : "LAPORAN PRESTASI BACAAN TASMIK KESELURUHAN & ANALISIS TAHAP";
+
+      let rows = [
+        [mainHeaderTitle],
+        [`Tarikh Cetakan Laporan: ${new Date().toLocaleDateString('ms-MY', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`],
+        [],
+        ["No.", "Nama Murid", "Kelas", "Tahap Bacaan Terkini", "Perincian / Catatan Terkini", "Tarikh Kemaskini Terakhir"]
+      ];
+
+      allStudents.forEach((student, idx) => {
+        const studentRecords = senaraiRekod.filter(r => r.murid === student.name && r.kelas === student.kelas);
+        
+        let tahapBacaan = "Belum Mula Tasmik";
+        let perincianCatatan = "-";
+        let tarikhKemaskini = "-";
+
+        if (studentRecords.length > 0) {
+          const latest = studentRecords[0]; 
+          tarikhKemaskini = latest.tarikh + (latest.masa ? ` (${latest.masa})` : "");
+          
+          if (latest.perincian === 'Khatam') {
+            tahapBacaan = "Khatam Al-Quran";
+            perincianCatatan = "Telah Tamat / Khatam 30 Juzuk";
+            counts.khatam++;
+          } else if (latest.jenisBacaan === 'Al-Quran') {
+            const juz = parseInt(latest.juzuk) || 1;
+            tahapBacaan = `Al-Quran (Juzuk ${juz})`;
+            
+            let parts = [];
+            if (latest.mukaSurat) parts.push(`MS ${latest.mukaSurat}`);
+            if (latest.surahAyat) parts.push(latest.surahAyat);
+            perincianCatatan = parts.join(" - ") || `Juzuk ${juz}`;
+
+            if (juz >= 1 && juz <= 5) counts.juz1_5++;
+            else if (juz >= 6 && juz <= 10) counts.juz6_10++;
+            else if (juz >= 11 && juz <= 15) counts.juz11_15++;
+            else if (juz >= 16 && juz <= 20) counts.juz16_20++;
+            else if (juz >= 21 && juz <= 25) counts.juz21_25++;
+            else if (juz >= 26 && juz <= 30) counts.juz26_30++;
+            else counts.juz1_5++;
+          } else {
+            tahapBacaan = latest.jenisBacaan; 
+            perincianCatatan = latest.surahAyat || "Halaman tidak dinyatakan";
+            
+            if (latest.jenisBacaan === "Iqra' 1" || latest.jenisBacaan === "Iqra' 2" || latest.jenisBacaan === "Iqra' 3") {
+              counts.iqra1_3++;
+            } else if (latest.jenisBacaan === "Iqra' 4" || latest.jenisBacaan === "Iqra' 5" || latest.jenisBacaan === "Iqra' 6") {
+              counts.iqra4_6++;
+            }
+          }
+        } else {
+          counts.belumMula++;
+        }
+
+        rows.push([
+          idx + 1,
+          student.name,
+          student.kelas,
+          tahapBacaan,
+          perincianCatatan,
+          tarikhKemaskini
+        ]);
+      });
+
+      // Jadual analisis di bahagian bawah (Dinamik mengikut pilihan kelas / keseluruhan)
+      rows.push([]);
+      rows.push([]);
+      const summaryHeaderTitle = (filterJenis === 'kelas' && filterKelasVal)
+        ? `JADUAL RUMUSAN ANALISIS PRESTASI KELAS: ${filterKelasVal.toUpperCase()}`
+        : "JADUAL RUMUSAN ANALISIS PRESTASI KESELURUHAN PELAJAR";
+
+      rows.push([summaryHeaderTitle]);
+      rows.push(["Kategori Pencapaian / Tahap Bacaan", "Bilangan Murid", "Peratusan (%)"]);
+
+      const totalStudents = allStudents.length;
+      const pct = (val) => `${((val / totalStudents) * 100).toFixed(1)}%`;
+
+      rows.push(["Peringkat Iqra' 1 - 3", counts.iqra1_3, pct(counts.iqra1_3)]);
+      rows.push(["Peringkat Iqra' 4 - 6", counts.iqra4_6, pct(counts.iqra4_6)]);
+      rows.push(["Al-Quran: Juz 1 - 5", counts.juz1_5, pct(counts.juz1_5)]);
+      rows.push(["Al-Quran: Juz 6 - 10", counts.juz6_10, pct(counts.juz6_10)]);
+      rows.push(["Al-Quran: Juz 11 - 15", counts.juz11_15, pct(counts.juz11_15)]);
+      rows.push(["Al-Quran: Juz 16 - 20", counts.juz16_20, pct(counts.juz16_20)]);
+      rows.push(["Al-Quran: Juz 21 - 25", counts.juz21_25, pct(counts.juz21_25)]);
+      rows.push(["Al-Quran: Juz 26 - 30", counts.juz26_30, pct(counts.juz26_30)]);
+      rows.push(["👑 Khatam Al-Quran", counts.khatam, pct(counts.khatam)]);
+      rows.push(["Belum Mula Tasmik", counts.belumMula, pct(counts.belumMula)]);
+      rows.push(["JUMLAH MURID KESELURUHAN", totalStudents, "100.0%"]);
+
+      // Bina fail Excel
+      const worksheet = XLSX.utils.aoa_to_sheet(rows);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Laporan & Analisis Prestasi");
+
+      // Auto-fit lajur Excel
+      const maxColWidths = [];
+      rows.forEach(row => {
+        row.forEach((cell, i) => {
+          const valStr = cell ? String(cell) : "";
+          if (!maxColWidths[i] || valStr.length > maxColWidths[i]) {
+            maxColWidths[i] = Math.min(valStr.length + 3, 38); 
+          }
+        });
+      });
+      worksheet['!cols'] = maxColWidths.map(w => ({ wch: w }));
+
+      const fileDate = new Date().toISOString().split('T')[0];
+      XLSX.writeFile(workbook, `Laporan_Prestasi_Tasmik_${fileSuffix}_${fileDate}.xlsx`);
+      showToast("Laporan prestasi & rumusan analisis berjaya dieksport ke Excel!");
+    }
+
+    // --- AUXILIARY UI MODALS/TOASTS ---
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      document.getElementById('toast-msg').textContent = msg;
+      t.classList.remove('hidden');
+      setTimeout(() => {
+        t.classList.add('opacity-100');
+        t.classList.remove('translate-y-2');
+      }, 50);
+
+      setTimeout(() => {
+        t.classList.remove('opacity-100');
+        t.classList.add('translate-y-2');
+        setTimeout(() => t.classList.add('hidden'), 300);
+      }, 4000);
+    }
+
+    // Modal
+    function showModal(title, msg, onConfirm) {
+      document.getElementById('modal-title').textContent = title;
+      document.getElementById('modal-message').innerHTML = msg; // Menggunakan innerHTML bagi membenarkan reka bentuk senarai & blok kod panduan
+      modalConfirmFn = onConfirm;
+      document.getElementById('modal-overlay').classList.remove('hidden');
+      document.getElementById('modal-confirm-btn').onclick = async () => {
+        await modalConfirmFn();
+        closeModal();
+      };
+      lucide.createIcons();
+    }
+
+    // Close Modal
+    function closeModal() {
+      document.getElementById('modal-overlay').classList.add('hidden');
+      // Reset button confirmation style
+      document.getElementById('modal-icon').className = 'w-7 h-7 text-red-600';
+      document.getElementById('modal-confirm-btn').innerHTML = '<i data-lucide="trash-2" class="w-4 h-4 mr-2"></i> Ya, Teruskan';
+    }
+
+    // --- ON INITIAL LOADING WRAPPERS ---
+    window.onload = function() {
+      // Setup current system date in local input
+      const todayString = new Date().toISOString().split('T')[0];
+      document.getElementById('input-tarikh').value = todayString;
+
+      initFirebase();
+      lucide.createIcons();
+    };
+  </script>
+</body>
+</html>
